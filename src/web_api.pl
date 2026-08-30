@@ -8,6 +8,11 @@
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
 
+:- discontiguous domain_assess/3.
+:- discontiguous domain_backward/3.
+:- discontiguous domain_recursive/3.
+:- discontiguous domain_forward/3.
+
 :- http_handler(root(api/health), api_health, []).
 :- http_handler(root(api/options), api_options, []).
 :- http_handler(root(api/advising/sample), api_adv_sample, [method(post)]).

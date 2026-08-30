@@ -40,13 +40,22 @@ Every domain can demonstrate backward, forward, and recursive reasoning. Shared 
 
 The public interface is a browser app served by the same SWI-Prolog engine. Each domain form posts to `/api/...`; the server proves the goal and returns the recommendation with explanations.
 
+**Repository:** https://github.com/ramseyappiah21/mdes-expert-system
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ramseyappiah21/mdes-expert-system)
+
 Locally:
 
 1. Install [SWI-Prolog](https://www.swi-prolog.org/Download.html).
 2. Run `run-web.bat`, then open http://127.0.0.1:8080/
-3. Or run the container: `docker build -t mdes .` then `docker run --rm -p 8080:8080 mdes`
+3. Or run the container:
 
-The server listens on `0.0.0.0` and uses the `PORT` environment variable (default 8080).
+```text
+docker build -t mdes .
+docker run --rm -p 8080:8080 mdes
+```
+
+The published image is `ghcr.io/ramseyappiah21/mdes-expert-system:latest` after the first successful Actions build. The server listens on `0.0.0.0` and uses the `PORT` environment variable (default 8080). For a permanent hostname, deploy the Dockerfile with the Render button above or `fly deploy`.
 
 ## Quick start (terminal)
 
