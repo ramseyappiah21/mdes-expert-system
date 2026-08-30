@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CAAES — CE 474 Group Project 1</title>
+  <style>
+    :root { --bg: #0f2744; --card: #16345a; --fg: #f4f7fb; --mut: #b8c7d9; --acc: #f0c14b; --ok: #7dcea0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #0b1c31; color: var(--fg); font-family: "Segoe UI", Calibri, sans-serif; }
+    .deck { height: 100%; }
+    .slide {
+      display: none;
+      height: 100%;
+      padding: 56px 72px;
+      background: linear-gradient(160deg, #0f2744 0%, #1a3d66 70%, #0f2744 100%);
+    }
+    .slide.on { display: flex; flex-direction: column; }
+    h1 { font-size: 42px; margin: 0 0 12px; letter-spacing: -0.03em; }
+    h2 { font-size: 32px; margin: 0 0 20px; color: var(--acc); }
+    p, li { font-size: 22px; line-height: 1.45; color: var(--fg); }
+    .mut { color: var(--mut); }
+    .kicker { color: var(--acc); letter-spacing: 0.12em; text-transform: uppercase; font-size: 14px; margin-bottom: 10px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 16px 18px; }
+    .card h3 { margin: 0 0 8px; font-size: 20px; color: var(--acc); }
+    .tiny { font-size: 16px; color: var(--mut); }
+    footer { margin-top: auto; display: flex; justify-content: space-between; color: var(--mut); font-size: 14px; }
+    code { color: var(--ok); }
+    .title-slide { justify-content: center; }
+    .title-slide h1 { font-size: 52px; }
+    .bar { height: 4px; width: 120px; background: var(--acc); margin: 18px 0 24px; }
+    .navhint { position: fixed; right: 20px; bottom: 16px; color: #7f93ab; font-size: 13px; }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+<section class="slide on title-slide">
+  <div class="kicker">CE 474 · Logic of Computer Science · Group Project 1</div>
+  <h1>MDES</h1>
+  <div class="bar"></div>
+  <p>Multi-Domain Expert System — all ten assignment domains in one Prolog program</p>
+  <p class="mut">A knowledge-based expert system in SWI-Prolog<br />University of Mines and Technology · July–August 2026</p>
+  <footer><span>UMaT · Computer Science &amp; Engineering</span><span>1 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>The problem</h2>
+  <p>Students and advisors must apply a dense web of <strong>prerequisites</strong>, <strong>credit limits</strong>, <strong>standing bands</strong>, and <strong>milestone gates</strong>.</p>
+  <div class="grid" style="margin-top:24px">
+    <div class="card"><h3>Local question</h3><p>May I take CE301 this semester?</p></div>
+    <div class="card"><h3>Global question</h3><p>Given this transcript and CGPA, what is the safest next step?</p></div>
+  </div>
+  <p class="mut" style="margin-top:24px">Both questions are logical. Both are easy to get wrong in conversation alone.</p>
+  <footer><span>Problem definition</span><span>2 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Domain and user</h2>
+  <p><strong>Target user:</strong> a CSE undergraduate, or an advisor acting for that student.</p>
+  <ul>
+    <li>Which courses are legal next semester — and why?</li>
+    <li>What credit load is safe on this standing?</li>
+    <li>Internship, Final Year Project, graduation: open or closed?</li>
+    <li>Which electives and career track match declared interests?</li>
+  </ul>
+  <p class="mut">Chosen because the lecture examples are already student/course/eligibility triples, and because prerequisite graphs demand recursive reasoning.</p>
+  <footer><span>Checkpoint: domain justification</span><span>3 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Architecture</h2>
+  <div class="grid">
+    <div class="card"><h3>1. Consultation</h3><p>Context questions, validation, guest session facts.</p></div>
+    <div class="card"><h3>2. Inference</h3><p>Backward, forward, and recursive engines.</p></div>
+    <div class="card"><h3>3. Knowledge base</h3><p>529 facts · 50 named rules · 43-course catalogue.</p></div>
+    <div class="card"><h3>4. Explanation</h3><p>Satisfied conditions printed as why / why-not.</p></div>
+  </div>
+  <p class="tiny" style="margin-top:20px">The interface never invents a recommendation. It asserts facts, then asks the same goals a programmer would type at the prompt.</p>
+  <footer><span>Practice: one-page architecture</span><span>4 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Knowledge representation</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Facts</h3>
+      <p class="tiny"><code>course/4</code> · <code>prerequisite/2</code><br /><code>offered/2</code> · <code>core_course/1</code><br /><code>passed/2</code> · <code>grade/3</code><br />thresholds, tracks, eight students</p>
+    </div>
+    <div class="card">
+      <h3>Example</h3>
+      <p class="tiny"><code>prerequisite(ce301, ce201).</code><br /><code>passed(ama, ce201).</code><br /><code>standing_threshold(warning, 1.50).</code><br /><code>declared_gpa(kofi, 1.70).</code></p>
+    </div>
+  </div>
+  <p style="margin-top:22px">Policy numbers live as data. Retuning first-class or graduation credits does not rewrite the engine.</p>
+  <footer><span>Knowledge-base design</span><span>5 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Rule groups (50 named rules)</h2>
+  <div class="grid">
+    <div class="card"><h3>R01–R11</h3><p>Prerequisites, offerings, eligibility.</p></div>
+    <div class="card"><h3>R12–R23</h3><p>GPA, standing, cores, electives, catch-up.</p></div>
+    <div class="card"><h3>R24–R34</h3><p>Interest match, scoring, load, semester pack.</p></div>
+    <div class="card"><h3>R35–R50</h3><p>Internship, FYP, graduation, what-if, support.</p></div>
+  </div>
+  <p class="tiny" style="margin-top:18px">Eligibility is universal quantification over direct prerequisites. Ancestor recursion is reserved for explanation and “how far back is the blockage?”</p>
+  <footer><span>Logical rule design</span><span>6 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Three reasoning modes</h2>
+  <div class="grid" style="grid-template-columns:1fr">
+    <div class="card"><h3>Backward — menu 3</h3><p><code>eligible_for(yaw, ce301)</code> starts from a goal and proves or fails. Natural when the user already has a yes/no question.</p></div>
+    <div class="card"><h3>Forward — menu 5</h3><p>From Kofi’s facts the engine <em>pushes</em> warning, reduced load, and support actions. Kofi never asked “am I at risk?”</p></div>
+    <div class="card"><h3>Recursive — menu 4</h3><p><code>ancestor_prerequisite(ce407, ce101)</code> walks Final Year Project II back to Introduction to Computing.</p></div>
+  </div>
+  <footer><span>Checkpoint: backward vs forward</span><span>7 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Interaction and explanation</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Context questions</h3>
+      <p>Year 1 is not asked about FYP. CGPA &lt; 2.00 triggers recovery questions. AI + year 3 asks about MA202.</p>
+    </div>
+    <div class="card">
+      <h3>Why / why-not</h3>
+      <p>Each course card lists satisfied rules: core, interest, gating value, level fit. Refusals list the missing chain.</p>
+    </div>
+  </div>
+  <p class="mut" style="margin-top:22px">Explanations are re-queried from the same rules that fired. Change a prerequisite and both the decision and the sentence change.</p>
+  <footer><span>Checkpoint: explanation design</span><span>8 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Error handling</h2>
+  <ul>
+    <li>Unknown tokens: <code>maybe</code>, <code>skip</code>, <code>unknown</code></li>
+    <li>Invalid year or menu index is rejected and repeated</li>
+    <li>Unknown course codes cannot enter the catalogue</li>
+    <li>Missing CGPA defaults to a conservative <strong>2.50</strong>, not 4.00</li>
+    <li><code>quit</code> cancels; unexpected errors restart the menu</li>
+  </ul>
+  <footer><span>Robust prompts and defaults</span><span>9 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Demonstration stories</h2>
+  <div class="grid">
+    <div class="card"><h3>Yaw</h3><p>Year 1 · CE301 must fail · missing-chain explanation</p></div>
+    <div class="card"><h3>Kofi</h3><p>CGPA 1.70 · warning · 15-credit cap</p></div>
+    <div class="card"><h3>Ama</h3><p>Year 3 · AI · internship-ready · CE301 planned</p></div>
+    <div class="card"><h3>Kojo / Akosua</h3><p>Year 4 · cannot graduate yet / near graduation</p></div>
+  </div>
+  <footer><span>Live demo scenarios</span><span>10 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Testing</h2>
+  <p>Run <code>test.bat</code>. Groups:</p>
+  <ul>
+    <li>Size: ≥ 80 facts, ≥ 40 rules, ≥ 40 courses</li>
+    <li>Backward and recursive oracles on Ama, Yaw, CE407</li>
+    <li>Forward conclusions: risk, internship, graduation</li>
+    <li>Planner, what-if, explanations, validation tokens</li>
+  </ul>
+  <p class="mut">Menu option 8 repeats a subset on stage so the examiner sees PASS lines without leaving the program.</p>
+  <footer><span>Testing strategy</span><span>11 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Strengths and limits</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Strengths</h3>
+      <p>One KB, three inference styles. Derived explanations. Standing-aware load. Demo oracles built into the facts.</p>
+    </div>
+    <div class="card">
+      <h3>Limits</h3>
+      <p>Teaching curriculum, not the official handbook. No timetable clashes. Simple (not credit-weighted) GPA. Single session.</p>
+    </div>
+  </div>
+  <footer><span>Evaluation</span><span>12 / 14</span></footer>
+</section>
+
+<section class="slide">
+  <h2>Deliverables</h2>
+  <ul>
+    <li>Complete Prolog source — <code>src/</code></li>
+    <li>System documentation — print <code>docs/System_Documentation.html</code> to A4 PDF</li>
+    <li>User manual — <code>docs/User_Manual.md</code></li>
+    <li>Slides — this file</li>
+    <li>Video script — <code>presentation/demo_script.md</code> (5–10 min)</li>
+    <li>Live demo — interaction, inference, explanation, error recovery</li>
+  </ul>
+  <footer><span>Submission pack</span><span>13 / 14</span></footer>
+</section>
+
+<section class="slide title-slide">
+  <div class="kicker">Questions</div>
+  <h1>Thank you</h1>
+  <div class="bar"></div>
+  <p>CAAES · CSE Academic Advising Expert System</p>
+  <p class="mut">Fill ten names in <code>docs/Group_Roles.md</code> before you submit.<br />Start the system with <code>run.bat</code>.</p>
+  <footer><span>CE 474 Group Project 1</span><span>14 / 14</span></footer>
+</section>
+
+</div>
+<div class="navhint">← → or space · Home / End</div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let i = 0;
+  function show(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+  }
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'Space', 'PageDown'].includes(e.code) || e.key === ' ') { e.preventDefault(); show(i + 1); }
+    if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.code)) { e.preventDefault(); show(i - 1); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+  });
+  document.addEventListener('click', (e) => {
+    if (e.clientX > window.innerWidth / 2) show(i + 1); else show(i - 1);
+  });
+</script>
+</body>
+</html>

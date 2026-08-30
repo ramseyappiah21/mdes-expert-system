@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MDES · Multi-Domain Expert System</title>
+  <meta name="description" content="A Prolog knowledge-based expert system covering ten decision domains. University of Mines and Technology, CE 474." />
+  <meta property="og:title" content="MDES · Multi-Domain Expert System" />
+  <meta property="og:description" content="Explained recommendations from ten SWI-Prolog knowledge bases." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <div class="wrap bar">
+      <a class="brand" href="#/" id="brandLink">
+        <span class="mark" aria-hidden="true"></span>
+        <span>
+          <strong>MDES</strong>
+          <small>Multi-Domain Expert System</small>
+        </span>
+      </a>
+      <nav>
+        <a href="#/">Domains</a>
+        <a href="#/about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <section id="home">
+      <div class="hero">
+        <p class="eyebrow">University of Mines and Technology · CE 474</p>
+        <h1>Knowledge-based decisions,<br />with the reasoning shown.</h1>
+        <p class="lead">Ten expert-system domains on one SWI-Prolog engine. Each recommendation is produced by logical rules — not a black box — and the satisfied conditions are printed beside the answer.</p>
+        <dl class="stats">
+          <div><dt>Domains</dt><dd>10</dd></div>
+          <div><dt>Advising facts</dt><dd>529+</dd></div>
+          <div><dt>Named rules</dt><dd>50+</dd></div>
+          <div><dt>Reasoning modes</dt><dd>3</dd></div>
+        </dl>
+      </div>
+      <div class="grid" id="domainGrid"></div>
+    </section>
+
+    <section id="domainView" hidden>
+      <button type="button" class="back" id="homeBtn">← All domains</button>
+      <header class="domain-head">
+        <p class="eyebrow" id="domainKicker"></p>
+        <h1 id="domainTitle"></h1>
+        <p class="lead" id="domainBlurb"></p>
+      </header>
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <div class="work">
+        <div id="panels"></div>
+        <div class="result" id="result" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="aboutView" hidden class="about">
+      <p class="eyebrow">About the system</p>
+      <h1>How MDES works</h1>
+      <p class="lead">MDES is a teaching expert system. A browser interface collects a case. The server loads the matching Prolog knowledge base and proves a goal, or derives conclusions from the facts, or walks a hierarchy. The same engine runs in the terminal via <code>run.bat</code>.</p>
+      <div class="about-grid">
+        <article>
+          <h2>Backward reasoning</h2>
+          <p>A concrete question — “Is this student eligible for CE301?” — is proved from the goal back to known facts.</p>
+        </article>
+        <article>
+          <h2>Forward reasoning</h2>
+          <p>Known facts about a case are used to push standing, unlocks, playbooks, or support actions without being asked one by one.</p>
+        </article>
+        <article>
+          <h2>Recursive reasoning</h2>
+          <p>Prerequisite chains, kill-chain stages, court appeal paths, and career ladders are walked as hierarchical graphs.</p>
+        </article>
+      </div>
+      <p class="note">Medical and legal modules are educational demonstrations. They do not provide clinical or legal advice.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p>Department of Computer Science &amp; Engineering · UMaT Tarkwa · Logic of Computer Science, Group Project 1</p>
+      <p>Inference in SWI-Prolog. Recommendations are reasoned over a teaching knowledge base.</p>
+    </div>
+  </footer>
+  <script src="/js/app.js"></script>
+</body>
+</html>

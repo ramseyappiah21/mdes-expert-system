@@ -1,0 +1,86 @@
+CAAES sample interactive session
+================================
+
+This transcript is a realistic walk-through of menu option 1
+(Interactive advising session). Answers typed by the user are
+shown after the prompt.
+
+---------------------------------------------------------------
+Interactive advising session
+You may type quit at most prompts to return to the menu.
+---------------------------------------------------------------
+What is your year of study? [1-4]: 3
+What is your current CGPA? Type unknown if you are unsure [0.0-4.0]: 3.4
+Which semester are you planning for?
+  1) first
+  2) second
+Enter the number of your choice [1-2]: 1
+List the major courses you have already passed (especially cores).
+Type course codes separated by spaces or commas. Type none if empty.
+> CE101 CE102 CE103 CE104 CE105 CE106 MA101 MA102 PH101 EN101 CE201 CE202 CE203 CE204 CE205 CE206 CE207 MA201 MA202
+Which area interests you most right now?
+  1) software
+  2) ai
+  3) security
+  4) networks
+  5) data
+  6) embedded
+  7) web
+  8) research
+Enter the number of your choice [1-8]: 2
+Would you like to add a second specialisation interest? (yes / no / unknown): yes
+Second interest?
+  ...
+Enter the number of your choice [1-8]: 8
+Are you comfortable with probability and statistics (MA202)? (yes / no / unknown): yes
+Have you passed Computer Programming II (CE104)? (yes / no / unknown): yes
+Have you completed Software Engineering I (CE207)? (yes / no / unknown): yes
+Are you aiming for an industrial internship this year? (yes / no / unknown): yes
+Do you want the system to keep your credit load conservative if you are at risk? (yes / no / unknown): yes
+
+----------------------------------------------------------------
+ADVISING REPORT
+----------------------------------------------------------------
+Student : guest
+Year    : 3     Semester: first     Focus: specialisation
+CGPA    : 3.40   Credits completed: 55 (19 courses)
+Interests: [ai,research]
+
+Academic standing
+  Computed/declared GPA is 3.40.
+  Academic standing is classified as second_upper (very good — second class upper).
+
+Next milestone
+  - choose_specialisation_and_internship
+
+Recommended actions
+  - apply_for_internship
+
+Semester plan (first semester)
+  CE301  Algorithms
+      ...
+  CE303  Theory of Computation
+      ...
+  CE302  Computer Networks
+      ...
+
+Career alignment
+  Suggested track: artificial_intelligence
+  Related industry: research_labs
+  Related industry: healthcare_it
+
+Graduation snapshot
+  Credits completed: 55 (minimum 120).
+  Outstanding core courses: ...
+  Verdict: not yet eligible for graduation.
+
+Error-handling examples
+-----------------------
+What is your year of study? [1-4]: 9
+Please enter a whole number between 1 and 4.
+
+Course to check (e.g. CE201, or unknown): ZZ100
+Unknown course code "ZZ100". Check the catalogue or type unknown.
+
+Do you have ... (yes / no / unknown): maybe
+(accepted as unknown; the system continues with a default or skips)

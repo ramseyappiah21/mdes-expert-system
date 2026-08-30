@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CAAES System Documentation — CE 474 Group Project 1</title>
+  <style>
+    @page { size: A4; margin: 22mm 20mm 24mm 20mm; }
+    :root {
+      --ink: #1a1a1a;
+      --muted: #444;
+      --rule: #bbb;
+      --accent: #1f4e79;
+    }
+    html { font-size: 12pt; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      color: var(--ink);
+      line-height: 1.55;
+      max-width: 180mm;
+      margin: 0 auto;
+      padding: 16px 12px 64px;
+    }
+    h1, h2, h3, h4 { font-family: Calibri, "Segoe UI", Arial, sans-serif; color: var(--accent); line-height: 1.25; }
+    h1 { font-size: 20pt; margin-top: 0; }
+    h2 { font-size: 16pt; page-break-before: auto; page-break-after: avoid; border-bottom: 1.5px solid var(--accent); padding-bottom: 4px; margin-top: 1.6em; }
+    h2.break { page-break-before: always; }
+    h3 { font-size: 13pt; margin-top: 1.4em; }
+    p { text-align: justify; hyphens: auto; }
+    .cover { min-height: 240mm; display: flex; flex-direction: column; justify-content: center; text-align: center; page-break-after: always; }
+    .cover h1 { font-size: 26pt; color: var(--accent); }
+    .cover .meta { margin-top: 2em; line-height: 1.8; }
+    .small, figcaption, td, th { font-size: 10.5pt; }
+    table { border-collapse: collapse; width: 100%; margin: 0.8em 0 1.2em; }
+    th, td { border: 1px solid #888; padding: 4px 6px; vertical-align: top; }
+    th { background: #e8eef5; text-align: left; }
+    caption { caption-side: top; font-style: italic; text-align: left; margin-bottom: 4px; }
+    code, pre { font-family: Consolas, "Courier New", monospace; font-size: 10pt; }
+    pre {
+      background: #f4f6f8;
+      border: 1px solid #ccd;
+      padding: 8px 10px;
+      white-space: pre-wrap;
+      page-break-inside: avoid;
+    }
+    .figure { text-align: center; margin: 1.2em 0; page-break-inside: avoid; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc li { margin: 0.25em 0; }
+    .muted { color: var(--muted); }
+    ul.compact li { margin: 0.15em 0; }
+    .footer-note { font-size: 10pt; color: var(--muted); }
+    @media print {
+      body { padding: 0; max-width: none; }
+      a { text-decoration: none; color: inherit; }
+    }
+  </style>
+</head>
+<body>
+
+<section class="cover">
+  <p class="muted">University of Mines and Technology, Tarkwa</p>
+  <p>Department of Computer Science &amp; Engineering</p>
+  <h1>CAAES<br />CSE Academic Advising Expert System</h1>
+  <p><strong>System Documentation</strong></p>
+  <p>An intelligent knowledge-based expert system implemented in SWI-Prolog</p>
+  <div class="meta">
+    <p>CE 474 — Logic of Computer Science<br />Group Project 1 (50 marks)</p>
+    <p>July–August 2026</p>
+    <p class="footer-note">Print this file to PDF on A4 (File → Print → Save as PDF).<br />Fill member names in Chapter 16 before binding.</p>
+  </div>
+</section>
+
+<h2>Abstract</h2>
+<p>
+This report describes the design, implementation, testing, and evaluation of
+<strong>CAAES</strong> (CSE Academic Advising Expert System), a knowledge-based
+expert system written in SWI-Prolog. The system advises undergraduate Computer
+Engineering students on course eligibility, semester planning, academic standing,
+internship and Final Year Project readiness, career-track alignment, and
+graduation. Domain knowledge is stored as first-order facts (courses,
+prerequisites, offerings, policy thresholds, and sample student records). Expert
+judgement is encoded as more than forty named Horn-clause rules. The inference
+layer demonstrates three classical reasoning styles required by the brief:
+<em>backward</em> (goal-driven) queries such as eligibility and graduation,
+<em>forward</em> (data-driven) derivation of standing and support actions, and
+<em>recursive</em> traversal of prerequisite hierarchies. A consultation module
+asks context-dependent questions, validates every answer, and prints an
+explanation for each recommendation. Automated tests confirm that the knowledge
+base exceeds eighty facts and forty rules and that representative decisions are
+stable.
+</p>
+<p><strong>Keywords:</strong> expert systems; Prolog; academic advising; backward chaining; forward chaining; recursive inference; knowledge explanation.</p>
+
+<h2>Table of contents</h2>
+<ol class="toc">
+  <li>Introduction and problem definition</li>
+  <li>Background: expert systems and Prolog</li>
+  <li>Domain justification and scope</li>
+  <li>System architecture</li>
+  <li>Knowledge representation</li>
+  <li>Rule-base description</li>
+  <li>Inference: backward, forward, and recursive reasoning</li>
+  <li>User interaction</li>
+  <li>Knowledge explanation</li>
+  <li>Error handling</li>
+  <li>Implementation notes</li>
+  <li>Sample queries and expected outputs</li>
+  <li>Testing strategy and results</li>
+  <li>Evaluation: strengths and limitations</li>
+  <li>Proposed future improvements</li>
+  <li>Group roles and project plan</li>
+  <li>References</li>
+  <li>Appendix A — Course catalogue</li>
+  <li>Appendix B — Named rule catalogue</li>
+  <li>Appendix C — File map and how to run</li>
+</ol>
+
+<h2 class="break">1. Introduction and problem definition</h2>
+<h3>1.1 Problem statement</h3>
+<p>
+Undergraduate engineering programmes publish a dense web of constraints:
+prerequisites, semester offerings, credit-load limits, class-of-degree bands,
+and milestone gates such as internship and the Final Year Project. Students
+experience these rules as a sequence of local questions (“May I take Algorithms
+this semester?”) while advisors experience them as a global planning problem
+(“Given this transcript and this CGPA, what is the safest next step?”). Both
+views are logical. Both are easy to get wrong when the reasoning is done only in
+conversation.
+</p>
+<p>
+The problem addressed by this project is therefore:
+</p>
+<p>
+<em>How can a knowledge-based system encode the regulations and the heuristic
+judgement of a CSE academic advisor so that a student can obtain an explained,
+consistent recommendation from incomplete or noisy input?</em>
+</p>
+
+<h3>1.2 Why an expert system</h3>
+<p>
+Expert systems were among the earliest successful applications of artificial
+intelligence precisely because some professional tasks are already written as
+facts plus if–then rules. Academic advising is one of those tasks. The
+regulations are explicit; the heuristics (prefer cores, repair weak
+prerequisites, reduce load on warning) are stable enough to write down; and the
+user needs a <em>reason</em>, not a black-box rank. A statistical recommender
+could guess popular course combinations, but it could not prove eligibility or
+point at the missing ancestor on a prerequisite chain.
+</p>
+
+<h3>1.3 Aim and objectives</h3>
+<p>The aim is to design, implement, test, and evaluate a fully functional
+Prolog-based expert system for CSE academic advising.</p>
+<ul>
+  <li>Represent a self-contained Computer Engineering curriculum as Prolog facts.</li>
+  <li>Encode at least forty expert rules for eligibility, standing, load, milestones, and scoring.</li>
+  <li>Demonstrate backward, forward, and recursive inference on the same knowledge base.</li>
+  <li>Interview a user with questions that change according to year, CGPA, and interest.</li>
+  <li>Explain every recommendation and every refusal.</li>
+  <li>Recover from unknown, invalid, and missing input.</li>
+  <li>Document architecture, tests, and limits at a length suitable for academic submission.</li>
+</ul>
+
+<h3>1.4 Success criteria (from the brief)</h3>
+<table>
+  <caption>Table 1. Success criteria mapped to deliverables</caption>
+  <tr><th>Criterion</th><th>Evidence in CAAES</th></tr>
+  <tr><td>≥ 80 facts</td><td>529 unit clauses counted by the test suite</td></tr>
+  <tr><td>≥ 40 rules</td><td>50 named rules in <code>rules.pl</code> (R01–R50)</td></tr>
+  <tr><td>Three reasoning modes</td><td>Menus 3, 4 and 5; Chapter 7</td></tr>
+  <tr><td>Interactive consultation</td><td>Menu 1; Chapter 8</td></tr>
+  <tr><td>Explanations</td><td>Course cards and why-not lists; Chapter 9</td></tr>
+  <tr><td>Error handling</td><td><code>validation.pl</code>; Chapter 10</td></tr>
+  <tr><td>Tests and documentation</td><td>Chapters 12–13; <code>test.bat</code></td></tr>
+</table>
+
+<h3>1.5 Document structure</h3>
+<p>
+Chapters 2–3 set the AI and domain context. Chapters 4–7 are the technical core:
+architecture, facts, rules, and inference. Chapters 8–10 describe the user-facing
+behaviour required by the brief. Chapters 11–13 record how the system was built
+and tested. Chapters 14–16 evaluate the work and show how the ten-person group
+is organised. Appendices list the catalogue and the named rules so that an
+examiner can audit completeness without reading source files first.
+</p>
+
+<h2>2. Background: expert systems and Prolog</h2>
+<h3>2.1 Expert systems</h3>
+<p>
+An expert system separates <em>what is known</em> from <em>how it is applied</em>.
+The classical architecture has three pieces: a knowledge base of facts and
+rules, an inference engine that applies those rules, and a working memory of
+case-specific data (here, the student’s transcript and answers). Optional
+facilities include an explanation module and a consultation (interview) layer.
+CAAES follows that architecture exactly, which is why the source tree is split
+into <code>knowledge_base.pl</code>, <code>rules.pl</code>,
+<code>inference.pl</code>, <code>explanation.pl</code>,
+<code>validation.pl</code>, and <code>consultation.pl</code>.
+</p>
+<p>
+Two control strategies dominate textbooks. <strong>Backward chaining</strong>
+starts from a goal and asks what would have to be true. It matches medical
+diagnosis (“Is this malaria?”) and eligibility (“Is this student allowed
+CE301?”). <strong>Forward chaining</strong> starts from known facts and fires
+every rule whose conditions are satisfied, pushing new conclusions into working
+memory. It matches monitoring and “tell me everything that follows from this
+transcript.” CAAES implements both, plus recursion for hierarchical structure.
+</p>
+
+<h3>2.2 Prolog as an implementation language</h3>
+<p>
+Prolog (Programming in Logic) is a natural host for this architecture. A fact
+such as <code>prerequisite(ce301, ce201).</code> is already a logical atom. A
+rule such as
+</p>
+<pre>eligible_for(Student, Course) :-
+    course(Course, _, _, _),
+    \+ has_passed(Student, Course),
+    all_prerequisites_satisfied(Student, Course).</pre>
+<p>
+is already a Horn clause. SLD resolution performs backward chaining for free:
+when the user asks <code>eligible_for(ama, ce301)</code>, the engine searches
+for a proof. That is why the assignment specifies SWI-Prolog rather than a
+general-purpose language in which the same search would have to be written by
+hand.
+</p>
+<p>
+SWI-Prolog additionally provides dynamic predicates (so an interview can
+<code>assertz</code> a guest transcript), <code>forall/2</code> for universal
+checks, and libraries for line-oriented input. CAAES uses those facilities but
+does not depend on rare extensions; the program is ordinary Edinburgh-style
+Prolog.
+</p>
+
+<h3>2.3 Related advising systems</h3>
+<p>
+Course-advising expert systems appear throughout the AI-education literature,
+often as MYCIN-style interviews over prerequisite tables. CAAES is deliberately
+in that tradition, with three additions that raise it above a toy lookup:
+(1) a scored planner that packs a semester to a standing-aware credit limit;
+(2) a recursive closure over the prerequisite graph, used both to block illegal
+registration and to explain the shortest missing path; (3) milestone rules
+(internship, FYP, honours, graduation) that sit on top of the same facts.
+The curriculum codes are original to this project; they are inspired by a
+typical four-year CSE programme and include CE474, Logic of Computer Science,
+as a named core.
+</p>
+
+<h2>3. Domain justification and scope</h2>
+<h3>3.1 Target user and decisions</h3>
+<p>
+<strong>Checkpoint (brief):</strong> the target user is an undergraduate
+Computer Engineering / Computer Science student, or a faculty advisor acting for
+that student. The expert system helps them decide (i) which courses they may
+legally take next semester, (ii) how many credits are safe given standing,
+(iii) whether internship, Final Year Project, or graduation gates are open, and
+(iv) which electives and career track fit declared interests.
+</p>
+<p>
+The domain was chosen over medical diagnosis or vehicle faults for three
+reasons. First, the assignment’s own illustrative facts are already
+student/course/eligibility triples; building on that vocabulary keeps the
+report aligned with the lecture examples. Second, prerequisite graphs are a
+textbook case of <em>recursive</em> reasoning, which medical symptom lists often
+lack. Third, every group member is already a domain informant: we know what a
+bad semester plan looks like.
+</p>
+
+<h3>3.2 In scope</h3>
+<ul class="compact">
+  <li>A 43-course catalogue across levels 100–400, with offerings and departments.</li>
+  <li>Direct prerequisites and their transitive closure.</li>
+  <li>Core versus elective classification and a minimum elective count.</li>
+  <li>CGPA bands used in Ghanaian university class-of-degree practice.</li>
+  <li>Eight sample students covering success, recovery, and near-graduation.</li>
+  <li>A guest interview that builds a temporary student record.</li>
+</ul>
+
+<h3>3.3 Out of scope</h3>
+<ul class="compact">
+  <li>Official UMaT Senate regulations and live student-information-system data.</li>
+  <li>Timetable clashes, room capacity, and lecturer availability.</li>
+  <li>Fee status, visa status, or disciplinary holds.</li>
+  <li>Natural-language understanding beyond tokenised yes/no and course codes.</li>
+  <li>Machine-learned ranking of electives from historical enrolment.</li>
+</ul>
+<p>
+These exclusions are intentional. An expert system that pretends to have
+authority it does not have is more dangerous than one that states its limits.
+The user manual repeats that CAAES is reasoned advice over a teaching knowledge
+base, not a registrar’s decision.
+</p>
+
+<h3>3.4 Actors and typical scenarios</h3>
+<table>
+  <caption>Table 2. Primary demonstration scenarios</caption>
+  <tr><th>Actor</th><th>Scenario</th><th>Expected system behaviour</th></tr>
+  <tr><td>Yaw (year 1)</td><td>Asks for CE301</td><td>Backward query fails; missing-chain explanation</td></tr>
+  <tr><td>Kofi (year 2)</td><td>Low CGPA</td><td>Warning standing; reduced load; support actions</td></tr>
+  <tr><td>Ama (year 3)</td><td>Strong AI student</td><td>Internship-ready; CE301/CE303 prioritised</td></tr>
+  <tr><td>Akosua (year 4)</td><td>Near the end</td><td><code>near_graduation</code>; FYP II still open</td></tr>
+  <tr><td>Kojo (year 4)</td><td>Missing cores</td><td><code>can_graduate</code> fails; remaining cores listed</td></tr>
+  <tr><td>Guest user</td><td>Interactive interview</td><td>Context questions; explained semester plan</td></tr>
+</table>
+
+<h2 class="break">4. System architecture</h2>
+<h3>4.1 Logical view</h3>
+<p>
+<strong>Practice (brief):</strong> user input, the inference engine, and the
+knowledge base interact as a closed loop. The consultation layer never writes
+recommendations itself. It only asserts session facts and then asks the engine
+the same questions a programmer would type at the Prolog prompt.
+</p>
+<div class="figure">
+<svg viewBox="0 0 720 260" width="100%" role="img" aria-label="CAAES architecture">
+  <rect x="10" y="90" width="150" height="70" rx="8" fill="#e8eef5" stroke="#1f4e79"/>
+  <text x="85" y="122" text-anchor="middle" font-size="14" font-family="Calibri, sans-serif">User</text>
+  <text x="85" y="142" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">answers / queries</text>
+  <rect x="200" y="70" width="180" height="110" rx="8" fill="#fff" stroke="#1f4e79" stroke-width="2"/>
+  <text x="290" y="100" text-anchor="middle" font-size="14" font-family="Calibri, sans-serif">Consultation</text>
+  <text x="290" y="120" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">validation</text>
+  <text x="290" y="138" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">context questions</text>
+  <text x="290" y="156" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">session facts</text>
+  <rect x="430" y="70" width="130" height="110" rx="8" fill="#fff" stroke="#1f4e79" stroke-width="2"/>
+  <text x="495" y="108" text-anchor="middle" font-size="14" font-family="Calibri, sans-serif">Inference</text>
+  <text x="495" y="128" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">B / F / recursive</text>
+  <text x="495" y="148" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">explanations</text>
+  <rect x="600" y="70" width="110" height="110" rx="8" fill="#e8eef5" stroke="#1f4e79" stroke-width="2"/>
+  <text x="655" y="108" text-anchor="middle" font-size="14" font-family="Calibri, sans-serif">Knowledge</text>
+  <text x="655" y="128" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">facts</text>
+  <text x="655" y="148" text-anchor="middle" font-size="11" font-family="Calibri, sans-serif">rules</text>
+  <path d="M160 125 H200" stroke="#1f4e79" marker-end="url(#arrow)"/>
+  <path d="M380 125 H430" stroke="#1f4e79"/>
+  <path d="M560 125 H600" stroke="#1f4e79"/>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1f4e79"/></marker></defs>
+  <text x="360" y="230" text-anchor="middle" font-size="12" font-family="Calibri, sans-serif">Report flows back: plan, standing, why / why-not, errors</text>
+</svg>
+<figcaption>Figure 1. Logical architecture of CAAES.</figcaption>
+</div>
+<p>
+Working memory for a guest interview is a small set of dynamic predicates:
+<code>student(guest)</code>, <code>passed(guest, Course)</code>,
+<code>declared_gpa(guest, GPA)</code>, <code>student_year(guest, Year)</code>,
+<code>student_interest(guest, Interest)</code>, and session flags such as
+<code>weak_programming</code>. Sample students are ordinary static facts; the
+same rules apply to both.
+</p>
+
+<h3>4.2 Process flow</h3>
+<div class="figure">
+<svg viewBox="0 0 720 200" width="100%" role="img" aria-label="Main inference process">
+  <rect x="20" y="70" width="120" height="50" rx="6" fill="#e8eef5" stroke="#1f4e79"/><text x="80" y="100" text-anchor="middle" font-size="12" font-family="Calibri, sans-serif">Collect facts</text>
+  <rect x="170" y="70" width="120" height="50" rx="6" fill="#fff" stroke="#1f4e79"/><text x="230" y="100" text-anchor="middle" font-size="12" font-family="Calibri, sans-serif">Validate</text>
+  <rect x="320" y="70" width="120" height="50" rx="6" fill="#fff" stroke="#1f4e79"/><text x="380" y="100" text-anchor="middle" font-size="12" font-family="Calibri, sans-serif">Infer</text>
+  <rect x="470" y="70" width="120" height="50" rx="6" fill="#fff" stroke="#1f4e79"/><text x="530" y="100" text-anchor="middle" font-size="12" font-family="Calibri, sans-serif">Explain</text>
+  <rect x="620" y="70" width="80" height="50" rx="6" fill="#e8eef5" stroke="#1f4e79"/><text x="660" y="100" text-anchor="middle" font-size="12" font-family="Calibri, sans-serif">Report</text>
+  <path d="M140 95 H170 M290 95 H320 M440 95 H470 M590 95 H620" stroke="#1f4e79"/>
+  <path d="M230 120 V160 H80 V120" stroke="#c0392b" fill="none"/>
+  <text x="155" y="178" text-anchor="middle" font-size="11" fill="#c0392b" font-family="Calibri, sans-serif">invalid / unknown → re-ask or default</text>
+</svg>
+<figcaption>Figure 2. Main inference process, including the validation loop.</figcaption>
+</div>
+
+<h3>4.3 Physical view (source files)</h3>
+<table>
+  <caption>Table 3. Source modules</caption>
+  <tr><th>File</th><th>Responsibility</th></tr>
+  <tr><td><code>src/knowledge_base.pl</code></td><td>All domain facts; dynamic declarations for session overwrite</td></tr>
+  <tr><td><code>src/rules.pl</code></td><td>Named expert rules R01–R50</td></tr>
+  <tr><td><code>src/inference.pl</code></td><td>Backward wrappers, recursive paths, forward working memory</td></tr>
+  <tr><td><code>src/explanation.pl</code></td><td>Why / why-not text assembled from satisfied conditions</td></tr>
+  <tr><td><code>src/validation.pl</code></td><td>Prompts, token sets, defaults</td></tr>
+  <tr><td><code>src/consultation.pl</code></td><td>Interview, reports, menu actions</td></tr>
+  <tr><td><code>src/loader.pl</code></td><td>Consults the six modules without starting the menu</td></tr>
+  <tr><td><code>src/main.pl</code></td><td>Interactive entry point</td></tr>
+  <tr><td><code>tests/test_suite.pl</code></td><td>Automated regression</td></tr>
+</table>
+<p>
+<code>loader.pl</code> changes the working directory to <code>src/</code> using
+<code>prolog_load_context/2</code> so the project can be started from the
+repository root on Windows paths that contain spaces.
+</p>
+
+<h2>5. Knowledge representation</h2>
+<h3>5.1 Design approach</h3>
+<p>
+Knowledge is represented as ground Prolog facts. There is no external database
+and no XML rule file. That choice keeps every demonstration inside one language:
+the examiner can open the knowledge base, edit a fact, reload, and watch a
+recommendation change. Predicates are given stable arities and English names so
+that the rule layer reads like a specification.
+</p>
+
+<h3>5.2 Principal fact types</h3>
+<table>
+  <caption>Table 4. Knowledge-base predicates (selected)</caption>
+  <tr><th>Predicate</th><th>Meaning</th></tr>
+  <tr><td><code>course/4</code></td><td>Code, title, credits, level</td></tr>
+  <tr><td><code>offered/2</code></td><td>Semester of offering (<code>first</code> / <code>second</code>)</td></tr>
+  <tr><td><code>prerequisite/2</code></td><td>Direct prerequisite edge</td></tr>
+  <tr><td><code>core_course/1</code>, <code>elective/2</code></td><td>Graduation role</td></tr>
+  <tr><td><code>course_interest/2</code>, <code>track_interest/2</code></td><td>Soft matching</td></tr>
+  <tr><td><code>passed/2</code>, <code>grade/3</code>, <code>declared_gpa/2</code></td><td>Student record</td></tr>
+  <tr><td><code>standing_threshold/2</code>, credit minima</td><td>Policy constants</td></tr>
+  <tr><td><code>student_year/2</code>, <code>student_interest/2</code></td><td>Profile</td></tr>
+</table>
+<p>
+A course is identified by a lowercase atom (<code>ce301</code>) and displayed in
+uppercase. Levels are 100, 200, 300, and 400. Credits are integers. Letter
+grades map through <code>grade_point/2</code> using a four-point scale
+(A = 4.00 … F = 0.00).
+</p>
+
+<h3>5.3 Prerequisite graph</h3>
+<p>
+The prerequisite relation is a directed acyclic graph. There is no course that
+requires itself, directly or indirectly. That invariant matters: recursive rules
+in Chapter 7 would not terminate on a cycle. The longest teaching example is
+the path from CE407 (Final Year Project II) back to CE101 (Introduction to
+Computing), which walks CE406, CE310, CE207, CE202, CE104, and CE102.
+</p>
+<pre>prerequisite(ce102, ce101).
+prerequisite(ce104, ce102).
+prerequisite(ce201, ce104).
+prerequisite(ce301, ce201).
+% ...
+prerequisite(ce406, ce310).
+prerequisite(ce407, ce406).</pre>
+
+<h3>5.4 Policy facts</h3>
+<p>
+Numeric policy is data, not hard-wired arithmetic inside every rule. Changing
+the first-class band or the graduation credit minimum is a one-line edit:
+</p>
+<pre>standing_threshold(first_class, 3.60).
+standing_threshold(warning, 1.50).
+graduation_credit_minimum(120).
+internship_credit_minimum(54).
+min_electives_required(4).
+recommended_credits(probation, 12).</pre>
+<p>
+This is the knowledge-engineer view of an expert system: the programmer writes
+the <em>shape</em> of the rule; the knowledge engineer can still retune
+thresholds without touching control flow.
+</p>
+
+<h3>5.5 Sample students as test oracles</h3>
+<p>
+Eight students are part of the knowledge base, not hidden in the test file.
+They are the oracles used in Chapter 13 and in the live demonstration.
+</p>
+<table>
+  <caption>Table 5. Sample student records</caption>
+  <tr><th>Student</th><th>Year</th><th>Interests</th><th>Design intent</th></tr>
+  <tr><td>ama</td><td>3</td><td>ai, research</td><td>Strong transcript; internship-ready; CE301 eligible</td></tr>
+  <tr><td>kwame</td><td>2</td><td>software, web</td><td>Level 100 complete; CE201 eligible; what-if unlocks CE301</td></tr>
+  <tr><td>akosua</td><td>4</td><td>data</td><td>Near graduation; FYP I done; FYP II open</td></tr>
+  <tr><td>kofi</td><td>2</td><td>software</td><td>Declared CGPA 1.70; warning; reduced load</td></tr>
+  <tr><td>yaw</td><td>1</td><td>software</td><td>Only CE101; CE301 must fail</td></tr>
+  <tr><td>abena</td><td>3</td><td>security, networks</td><td>Specialisation contrast with Ama</td></tr>
+  <tr><td>kojo</td><td>4</td><td>software</td><td>Missing cores; cannot graduate</td></tr>
+  <tr><td>efua</td><td>2</td><td>data</td><td>Second year-2 profile with a different interest</td></tr>
+</table>
+
+<h3>5.6 Volume</h3>
+<p>
+The assignment asks for at least eighty facts. CAAES stores 529
+unit clauses: 43 courses, 43 offerings, 43 department links, a dense
+prerequisite list, cores and electives, interest and skill tags, policy rows,
+and full transcripts for the sample students. The test suite counts these
+clauses at runtime and fails if the total drops below eighty. That count is a
+<em>guard</em>, not a target; the extra facts exist because a believable
+curriculum is larger than a toy.
+</p>
+
+<h2>6. Rule-base description</h2>
+<h3>6.1 Design principles</h3>
+<p>
+Rules are written as named predicates with comments R01–R50. A rule has a
+single responsibility. Eligibility does not also print text. Scoring does not
+also decide graduation. Explanation predicates in a separate file <em>read</em>
+the same rules; they do not duplicate the logic in English.
+</p>
+<p>
+Negation is used only as negation-as-failure over a closed catalogue
+(<code>\+ has_passed(Student, Course)</code>). That is acceptable because the
+universe of courses is finite and listed. We do not treat “not in the
+transcript” as a medical unknown; we treat it as “not yet passed.”
+</p>
+
+<h3>6.2 Rule groups</h3>
+<table>
+  <caption>Table 6. Rule groups</caption>
+  <tr><th>Group</th><th>Rules</th><th>Purpose</th></tr>
+  <tr><td>Prerequisites</td><td>R01–R07</td><td>Passed, missing, ancestor, depth, blockage</td></tr>
+  <tr><td>Eligibility</td><td>R08–R11</td><td>Offering + prerequisites → may register</td></tr>
+  <tr><td>Progress metrics</td><td>R12–R18</td><td>Credits, GPA, standing, year level</td></tr>
+  <tr><td>Curriculum debt</td><td>R19–R23</td><td>Catch-up, remaining cores, electives</td></tr>
+  <tr><td>Matching</td><td>R24–R29</td><td>Interests, tracks, gating value</td></tr>
+  <tr><td>Planning</td><td>R30–R34</td><td>Scores, top-N, load, overload</td></tr>
+  <tr><td>Milestones</td><td>R35–R40</td><td>Internship, FYP, graduation, honours</td></tr>
+  <tr><td>Advice</td><td>R41–R50</td><td>Repeats, electives, what-if, support, focus</td></tr>
+</table>
+
+<h3>6.3 Eligibility (core expert rule)</h3>
+<pre>eligible_for(Student, Course) :-
+    course(Course, _, _, CourseLevel),
+    \+ has_passed(Student, Course),
+    all_prerequisites_satisfied(Student, Course),
+    progression_level(Student, StudentLevel),
+    (   at_risk(Student)
+    ->  CourseLevel =< StudentLevel
+    ;   CourseLevel =< StudentLevel + 100
+    ).
+
+all_prerequisites_satisfied(Student, Course) :-
+    forall(prerequisite(Course, Required),
+           has_passed(Student, Required)).</pre>
+<p>
+A student may take a catalogue course that they have not already passed, once
+every <em>direct</em> prerequisite is on the transcript and the course is not
+more than one level above their year (or not above their year if they are at
+risk). That last guard stops a student on warning from being handed a 400-level
+core that happens to have no prerequisites. Indirect ancestors are
+enforced automatically: if CE201 is missing, CE301 is missing a direct
+prerequisite, so the universal check fails. The recursive ancestor predicate is
+therefore not required for legality; it is required for <em>explanation</em> and
+for “how far back is the blockage?”
+</p>
+
+<h3>6.4 Academic standing</h3>
+<p>
+Standing is a first-match cascade from first class down to probation. Thresholds
+live in the knowledge base. <code>gpa/2</code> prefers a declared CGPA (used
+for Kofi and for guest interviews) and otherwise averages recorded letter
+grades. <code>at_risk/1</code> is true for warning or probation and drives the
+reduced-load rule.
+</p>
+
+<h3>6.5 Priority scoring</h3>
+<p>
+Legal eligibility is not the same as a good plan. A year-3 student might be
+eligible for a low-value elective and for a gating core in the same semester.
+<code>course_priority_score/3</code> adds points for core status (+5), interest
+match (+3), gating value (+2 if the course unlocks two or more later courses),
+catch-up of a lower level (+4), and level fit (+2 or +3). The semester planner
+sorts by this score and then packs courses until the standing-aware credit
+limit is reached (18 / 15 / 12, never above 21).
+</p>
+
+<h3>6.6 Milestone rules</h3>
+<p>
+Internship readiness requires year ≥ 3, credits at or above the internship
+minimum, CE207 and CE204 passed, and CGPA ≥ 2.50. Final Year Project I requires
+year ≥ 4, CE310, and a higher credit floor. Graduation is conjunctive: credit
+minimum, zero remaining cores, enough electives, both FYP courses, and CGPA ≥
+2.00. Near-graduation is a weaker predicate used for advice when the student is
+in year 4 with few remaining cores but is not yet fully eligible.
+</p>
+
+<h3>6.7 Completeness</h3>
+<p>
+Appendix B lists all fifty named rules. The test suite fails if that list
+shrinks below forty. Several rules have more than one clause
+(<code>academic_standing/2</code>, <code>support_action/2</code>,
+<code>next_milestone/2</code>); the assignment’s “forty rules” is interpreted
+as forty distinct expert predicates, which is the unit a knowledge engineer
+would count on a rule sheet.
+</p>
+
+<h2 class="break">7. Inference: backward, forward, and recursive reasoning</h2>
+<h3>7.1 Backward reasoning (goal-driven)</h3>
+<p>
+<strong>Checkpoint (brief):</strong> backward reasoning is more natural than
+forward reasoning when the user already has a concrete yes/no question.
+“Is Ama eligible for CE301?” is such a question. The engine starts from
+<code>eligible_for(ama, ce301)</code> and works back to
+<code>course/4</code>, <code>\+ passed(ama, ce301)</code>, and
+<code>passed(ama, ce201)</code>. It does not need to derive Kofi’s standing or
+Akosua’s graduation status on the way. Menu option 3 exposes this mode.
+Graduation and internship questions are the same pattern with different goals.
+</p>
+<p>
+Prolog’s default search <em>is</em> backward chaining. CAAES does not re-implement
+a resolver; it poses goals and lets SLD resolution do the work. The wrapper
+predicates in <code>inference.pl</code> only normalise the answer to yes/no for
+documentation and tests.
+</p>
+
+<h3>7.2 Forward reasoning (data-driven)</h3>
+<p>
+Forward reasoning starts from everything already known about one student and
+asks what else must be true. <code>run_forward_steps/2</code> repeatedly looks
+for a conclusion that is not yet in working memory — standing, each unlocked
+course, internship readiness, graduation, support actions — and asserts it as
+<code>derived/2</code>. The loop stops when a full pass adds nothing. A second
+predicate, <code>forward_infer/1</code>, records an aggregated profile (credit
+total, GPA, remaining cores, primary track) for the printed demo.
+</p>
+<p>
+This is data-driven in the textbook sense: Kofi never types “am I at risk?”
+The facts <code>declared_gpa(kofi, 1.70)</code> and the standing thresholds
+<em>produce</em> <code>standing(warning)</code> and then
+<code>support(reduce_load)</code>. Menu option 5 is the live demonstration.
+</p>
+
+<h3>7.3 Recursive reasoning</h3>
+<p>
+Hierarchical structure appears as the prerequisite graph. Two mutually
+illustrative predicates are:
+</p>
+<pre>ancestor_prerequisite(Course, Required) :-
+    prerequisite(Course, Required).
+ancestor_prerequisite(Course, Required) :-
+    prerequisite(Course, Mid),
+    ancestor_prerequisite(Mid, Required).
+
+prerequisite_path(Course, Required, [Course, Required]) :-
+    prerequisite(Course, Required).
+prerequisite_path(Course, Required, [Course|Path]) :-
+    prerequisite(Course, Mid),
+    prerequisite_path(Mid, Required, Path).</pre>
+<p>
+The first is a classic transitive closure. The second retains the path so the
+explanation facility can print the shortest blocked chain. Depth and “longest
+path” predicates support the catalogue explorer (menu 4). Tests require that
+<code>ancestor_prerequisite(ce407, ce101)</code> succeeds and that CE310 is an
+<em>ancestor</em> but not a <em>direct</em> prerequisite of CE407.
+</p>
+
+<h3>7.4 What-if as a controlled forward step</h3>
+<p>
+<code>what_if_unlocks/3</code> asks which courses would become eligible if one
+extra course were marked passed, without asserting that fact into the database.
+It is a hypothetical forward step used in planning conversations (“If I take
+CE201 now, what opens next year?”). For Kwame, passing CE201 newly unlocks
+CE301 and CE303.
+</p>
+
+<h3>7.5 Closed-world assumption</h3>
+<p>
+All three modes assume a closed world for the catalogue and an open world for
+the guest transcript. If CE399 is not a fact, it is not a course. If a guest
+does not list CE104, they have not passed CE104. The interview can add facts;
+it cannot add courses. That distinction is what keeps unknown input from
+inventing a parallel curriculum.
+</p>
+
+<h2>8. User interaction</h2>
+<h3>8.1 Modes</h3>
+<p>
+The main menu offers an interview, a sample-student report, a backward
+eligibility query, a recursive chain explorer, a forward-inference demo, a
+what-if query, a catalogue, self-checks, and exit. This is more than a single
+dialog, because the brief asks the group to <em>demonstrate</em> reasoning
+styles, not only to hide them behind one recommendation.
+</p>
+
+<h3>8.2 Context-dependent questions</h3>
+<p>
+The interview is not a fixed questionnaire. After year and CGPA are known, later
+prompts branch:
+</p>
+<ul>
+  <li>Year 1 asks for Level 100 courses only and never mentions FYP.</li>
+  <li>Year ≥ 2 asks whether CE104 is passed.</li>
+  <li>Year ≥ 3 asks for a second interest, CE207, and internship intention. An AI interest additionally asks about MA202 comfort.</li>
+  <li>Year 4 asks about CE310 and CE406.</li>
+  <li>CGPA &lt; 2.00 asks about failed programming courses and stores a recovery flag.</li>
+</ul>
+<p>
+That branching is the “intelligent, context-dependent questions” requirement.
+It is implemented as ordinary Prolog conditions around <code>ask_yes_no/2</code>,
+not as a separate planning language.
+</p>
+
+<h3>8.3 Report</h3>
+<p>
+The advising report always contains: profile (year, semester, focus, CGPA,
+credits, interests); standing explanation; next milestone; support actions;
+a semester plan of course cards; career-track and industry suggestions; and a
+graduation snapshot. Focus itself is a rule
+(<code>consultation_focus/2</code>): recovery, foundations, specialisation, or
+graduation.
+</p>
+
+<h3>8.4 Comparison with the brief’s medical dialog</h3>
+<p>
+The assignment’s example asks “Do you have fever?” then “Do you have headache?”
+and prints a diagnosis. CAAES asks “What is your year?” then only those clinical
+questions that still matter, and prints a <em>plan</em> plus reasons. The control
+pattern is the same: interview → infer → explain. The vocabulary is academic
+rather than medical because that is the chosen domain.
+</p>
+
+<h2>9. Knowledge explanation</h2>
+<h3>9.1 Design (checkpoint)</h3>
+<p>
+<strong>Checkpoint (brief):</strong> explanation information is collected as the
+list of satisfied conditions for the decision that was just taken, then
+displayed as bullet text. CAAES does not store a parallel “explanation
+knowledge base.” It re-queries the same rules that produced the answer and
+renders each success as a sentence.
+</p>
+<ul>
+  <li><code>explain_course/3</code> — why a course is recommended (prerequisites, core, catch-up, interest, gating, level).</li>
+  <li><code>explain_ineligible/3</code> — why a course is refused (already passed, missing direct prerequisite, blocked ancestor path).</li>
+  <li><code>explain_standing/2</code> — GPA, class-of-degree phrase, warning reasons.</li>
+  <li><code>explain_graduation/2</code> — credits, cores, electives, FYP, verdict.</li>
+</ul>
+
+<h3>9.2 Example: positive explanation</h3>
+<p>
+For Ama and CE301 the collected reasons include: all listed prerequisites are
+passed; CE301 is a core; the course is at level 300; and passing it unlocks
+later work (CE305 among others). The printed card also shows the numeric
+priority score so a sceptical advisor can see that the ranking is not arbitrary.
+</p>
+
+<h3>9.3 Example: negative explanation</h3>
+<p>
+For Yaw and CE301 the system reports that CE201 is a missing direct
+prerequisite and that earlier ancestors (CE104, CE102, CE101 is already passed)
+still sit on the chain. The shortest blocked path is printed so the student
+sees a repair sequence rather than a single “no.”
+</p>
+
+<h3>9.4 Honesty</h3>
+<p>
+If no extra reason fires, the printer says so rather than inventing a
+paragraph. Empty reason lists are treated as a defect in tests for the standard
+demo cases, where at least one reason must exist.
+</p>
+
+<h2>10. Error handling</h2>
+<p>
+The brief requires graceful handling of unknown inputs, invalid entries, and
+missing information. CAAES centralises that behaviour in
+<code>validation.pl</code>.
+</p>
+<table>
+  <caption>Table 7. Recovery policy</caption>
+  <tr><th>Situation</th><th>Behaviour</th></tr>
+  <tr><td>Unrecognised yes/no token</td><td>Message and repeat; no default yes</td></tr>
+  <tr><td><code>unknown</code> / <code>maybe</code> / <code>skip</code></td><td>Accepted as unknown; CGPA becomes 2.50; other items skipped</td></tr>
+  <tr><td>Year or menu out of range</td><td>Rejected; range restated</td></tr>
+  <tr><td>Empty line</td><td>Rejected; “a number is required”</td></tr>
+  <tr><td>Unknown course code</td><td>Rejected, or, in a list, quarantined with a keep/retry question</td></tr>
+  <tr><td>Unknown sample-student name</td><td>Rejected with the legal name list</td></tr>
+  <tr><td><code>quit</code> / end of file</td><td>Session cancelled; menu returns</td></tr>
+  <tr><td>Unexpected Prolog exception in the menu</td><td>Caught, printed, menu restarted</td></tr>
+</table>
+<p>
+Defaults are documented in the user manual. A missing CGPA is not treated as
+4.00 (which would unlock honours) and not as 0.00 (which would force
+probation). The neutral 2.50 band is “second class lower,” a conservative
+middle that still allows internship arithmetic to be discussed honestly.
+</p>
+
+<h2>11. Implementation notes</h2>
+<h3>11.1 Language and libraries</h3>
+<p>
+The implementation is SWI-Prolog using <code>library(lists)</code> and
+<code>library(readutil)</code>. There are no foreign-language wrappers. Dynamic
+predicates that the interview may extend are declared at the top of the
+knowledge base so <code>assertz/1</code> is legal.
+</p>
+
+<h3>11.2 Control decisions</h3>
+<p>
+Cuts (<code>!</code>) appear only where a classification must not backtrack into
+a worse band (GPA standing, declared-GPA preference, consultation focus). They
+are not used to “make the program faster” in the planner. Failure-driven loops
+appear in the forward-step engine and in <code>forall</code> checks, which is
+idiomatic Prolog rather than an accident.
+</p>
+
+<h3>11.3 Display versus identity</h3>
+<p>
+Internal atoms stay lowercase. All user-facing printers call
+<code>upcase_course/2</code>. Input is lower-cased before matching. That
+prevents the classic student bug in which <code>CE301</code> and
+<code>ce301</code> become two different courses.
+</p>
+
+<h3>11.4 How to run</h3>
+<p>
+From the project root: <code>run.bat</code> or <code>swipl -s src/main.pl</code>.
+Tests: <code>test.bat</code> or <code>swipl -q -s tests/test_suite.pl</code>.
+Programmers can <code>consult('src/loader.pl')</code> and type the queries in
+Chapter 12 without starting the menu.
+</p>
+
+<h2 class="break">12. Sample queries and expected outputs</h2>
+<p>
+The following queries assume <code>src/loader.pl</code> is consulted. They are
+the script used in the demonstration video and in
+<code>examples/sample_queries.pl</code>.
+</p>
+
+<h3>12.1 Backward: eligibility</h3>
+<pre>?- eligible_for(ama, ce301).
+true.
+
+?- eligible_for(yaw, ce301).
+false.
+
+?- eligible_for(ama, ce101).
+false.          % already passed</pre>
+
+<h3>12.2 Backward: graduation and risk</h3>
+<pre>?- can_graduate(kojo).
+false.
+
+?- at_risk(kofi), academic_standing(kofi, S).
+S = warning.</pre>
+
+<h3>12.3 Recursive: ancestor chain</h3>
+<pre>?- ancestor_prerequisite(ce407, ce101).
+true.
+
+?- prerequisite(ce407, ce310).
+false.          % CE310 is an ancestor, not a direct parent
+
+?- longest_prerequisite_path(ce407, D).
+D = 7.          % or another integer ≥ 5</pre>
+
+<h3>12.4 Forward: derived profile</h3>
+<pre>?- forward_infer(ama), derived(ama, internship_ready).
+true.
+
+?- run_forward_steps(kofi, Facts).
+% Facts include standing(warning) and support(reduce_load)</pre>
+
+<h3>12.5 Planning and what-if</h3>
+<pre>?- top_recommendations(ama, first, 5, Courses),
+   member(ce301, Courses).
+true.
+
+?- recommended_load(kofi, C).
+C = 15.
+
+?- what_if_unlocks(kwame, ce201, Newly),
+   member(ce301, Newly).
+true.</pre>
+
+<h3>12.6 Explanations</h3>
+<pre>?- explain_course(ama, ce301, Reasons).
+Reasons = ['All listed prerequisites have been passed.', ...].
+
+?- explain_ineligible(yaw, ce301, Reasons).
+Reasons = [/* missing CE201 and related chain text */].</pre>
+
+<h3>12.7 Expected interactive excerpt</h3>
+<p>
+A year-3 guest with CGPA 3.40, first semester, a complete Level 100–200 core
+list, and interest <code>ai</code> should receive focus
+<code>specialisation</code>, a second-upper standing line, the action
+<code>apply_for_internship</code>, and a first-semester plan that prefers CE301
+and CE303. A full typed transcript is stored in
+<code>examples/sample_session.txt</code>.
+</p>
+
+<h2>13. Testing strategy and results</h2>
+<h3>13.1 Strategy</h3>
+<p>
+Testing has three layers. <em>Automated predicates</em> in
+<code>tests/test_suite.pl</code> act as regression oracles for the eight sample
+students and for validation helpers. <em>Menu self-checks</em> (option 8) repeat
+a subset of those oracles for the live demo. <em>Manual scripts</em> cover
+interview branching and invalid input, which are awkward to drive without a
+pseudo-terminal.
+</p>
+<p>
+The strategy is specification-based, not random. Each automated case is a
+sentence from Chapters 3, 6, or 7 (“Yaw must not be eligible for CE301”).
+When a rule changes, the suite is the first place a contradiction appears.
+</p>
+
+<h3>13.2 Automated cases</h3>
+<table>
+  <caption>Table 8. Automated test groups</caption>
+  <tr><th>Group</th><th>What must remain true</th></tr>
+  <tr><td>Knowledge-base size</td><td>≥ 40 courses; ≥ 80 fact clauses; ≥ 40 named rules</td></tr>
+  <tr><td>Backward reasoning</td><td>Ama/CE301 yes; Yaw/CE301 no; Kwame/CE201 yes; Ama/CE101 no</td></tr>
+  <tr><td>Recursive reasoning</td><td>CE407→CE101; CE310 ancestor-only; longest path ≥ 5</td></tr>
+  <tr><td>Forward conclusions</td><td>Kofi warning; Ama internship; Kojo not graduating; Akosua near; Yaw foundations</td></tr>
+  <tr><td>Recommendations</td><td>CE301 in Ama’s top 5; Kofi load ≤ 15; Kwame+CE201 unlocks CE301</td></tr>
+  <tr><td>Explanations</td><td>Non-empty why and why-not lists</td></tr>
+  <tr><td>Validation</td><td>yes/no/unknown/quit tokens; CE301 normalises; ZZ999 rejected</td></tr>
+</table>
+
+<h3>13.3 Results</h3>
+<p>
+The suite is designed to print <code>PASS</code> per case and to exit with
+status 0 only when the failure list is empty. It also prints the live fact
+count and named-rule count so the demonstration can show the assignment minima
+being exceeded without opening a spreadsheet.
+</p>
+<p>
+Manual error-handling cases (year = 9, course = ZZ100, student = nobody, empty
+CGPA, <code>unknown</code> CGPA) were exercised during implementation. Expected
+messages are listed in the user manual and in
+<code>examples/sample_session.txt</code>.
+</p>
+
+<h3>13.4 Traceability to marks</h3>
+<table>
+  <caption>Table 9. Testing versus the marking scheme</caption>
+  <tr><th>Marking item</th><th>How testing supports it</th></tr>
+  <tr><td>Knowledge-base design (10)</td><td>Size guards + catalogue consistency (every course has an offering)</td></tr>
+  <tr><td>Logical rule design (10)</td><td>Eligibility, standing, graduation, scoring oracles</td></tr>
+  <tr><td>Implementation (10)</td><td>Loader consults; menus call the same predicates as the suite</td></tr>
+  <tr><td>Testing (5)</td><td>This chapter; <code>test.bat</code>; menu option 8</td></tr>
+</table>
+
+<h2 class="break">14. Evaluation: strengths and limitations</h2>
+<h3>14.1 Strengths</h3>
+<ul>
+  <li><strong>One knowledge base, three inference styles.</strong> The same facts answer a goal, push conclusions, and walk a hierarchy. That is the pedagogical point of the course.</li>
+  <li><strong>Explanations are derived, not canned.</strong> Changing a prerequisite changes both the decision and the why-not text.</li>
+  <li><strong>Standing-aware planning.</strong> Kofi cannot receive Ama’s credit load by accident; the load rule is tied to <code>at_risk/1</code>.</li>
+  <li><strong>Closed catalogue, open transcript.</strong> Invalid courses cannot sneak in; missing student data is handled as unknown or default.</li>
+  <li><strong>Demo-ready oracles.</strong> Eight students cover the stories an examiner is likely to ask for.</li>
+  <li><strong>Volume with structure.</strong> Hundreds of facts are grouped by predicate, not dumped as an unreadable wall.</li>
+</ul>
+
+<h3>14.2 Limitations</h3>
+<ul>
+  <li><strong>Teaching curriculum, not the official handbook.</strong> Course codes and credit totals are internally consistent but are not a registrar extract. Using CAAES for a real registration would be misuse.</li>
+  <li><strong>No clash detection.</strong> Two recommended courses might share a real timetable slot. The knowledge base has no timetable facts.</li>
+  <li><strong>CGPA is a simple average of recorded grades</strong> (or a declared number). Credit-weighted GPA and repeated-course replacement rules are not modelled.</li>
+  <li><strong>Interest matching is keyword overlap</strong>, not a psychological instrument. Two shared tags beat one; there is no decay or recency.</li>
+  <li><strong>Forward chaining is student-scoped</strong>, not a general RETE network. That is sufficient for the brief and easier to explain in a ten-minute demo.</li>
+  <li><strong>Interview branching is coded,</strong> not driven by a separate question-selection rule engine. Adding a new year-5 programme would require new clauses in <code>consultation.pl</code>.</li>
+  <li><strong>Single-user, single-session.</strong> There is no login, no saved guest file, and no concurrency.</li>
+</ul>
+
+<h3>14.3 Ethical note</h3>
+<p>
+An advising system can harm a student if it is over-trusted. CAAES therefore
+prints evidence (GPA, credits, missing cores) beside every verdict and states
+in the user manual that it does not replace faculty advice. Defaults for
+unknown CGPA are conservative. The system will not invent a passed course to
+make a plan look full.
+</p>
+
+<h2>15. Proposed future improvements</h2>
+<ol>
+  <li><strong>Official curriculum import.</strong> Load the real departmental handbook as facts, with an audit trail of the version date.</li>
+  <li><strong>Credit-weighted GPA and repeat-and-replace</strong> rules as used by the examinations office.</li>
+  <li><strong>Timetable and clash facts</strong> so a semester plan is physically attendable.</li>
+  <li><strong>Question-selection rules</strong> that pick the next interview question by information gain (still symbolic, still explainable).</li>
+  <li><strong>Persistent guest records</strong> in a Prolog save file, with explicit consent text.</li>
+  <li><strong>Graphical prerequisite viewer</strong> that draws the path currently printed as a list.</li>
+  <li><strong>Bilingual prompts</strong> (English / Twi) without changing the rule layer — only the validation lexicon.</li>
+  <li><strong>Advisor override facts</strong> (<code>waiver(Student, Course)</code>) so a documented exemption participates in eligibility.</li>
+  <li><strong>Broader regression pack</strong> that drives the interview through a recorded answer file.</li>
+  <li><strong>Formal proof notes</strong> exported beside each report for the student’s file.</li>
+</ol>
+
+<h2>16. Group roles and project plan</h2>
+<h3>16.1 Roles</h3>
+<p>
+The brief requires ten named technical roles. Names must be written on the
+lines below before the report is bound. Responsibilities are already defined so
+that the page is not an empty table.
+</p>
+<table>
+  <caption>Table 10. Group roles</caption>
+  <tr><th>No.</th><th>Role</th><th>Name</th><th>Main responsibilities</th></tr>
+  <tr><td>1</td><td>Project Manager</td><td>______________</td><td>Timeline, meetings, integration, risks</td></tr>
+  <tr><td>2</td><td>Knowledge Engineer</td><td>______________</td><td>Curriculum facts, student model</td></tr>
+  <tr><td>3</td><td>Knowledge Engineer</td><td>______________</td><td>Tracks, thresholds, sample records</td></tr>
+  <tr><td>4</td><td>Rule Designer</td><td>______________</td><td>Eligibility, standing, planning, graduation</td></tr>
+  <tr><td>5</td><td>Prolog Programmer</td><td>______________</td><td>Knowledge base and rules in SWI-Prolog</td></tr>
+  <tr><td>6</td><td>Prolog Programmer</td><td>______________</td><td>Consultation, validation, explanation</td></tr>
+  <tr><td>7</td><td>Testing Lead</td><td>______________</td><td>Suite, expected outputs, pre-demo freeze</td></tr>
+  <tr><td>8</td><td>Documentation Lead</td><td>______________</td><td>This report and the user manual</td></tr>
+  <tr><td>9</td><td>Presentation Designer</td><td>______________</td><td>Slides, diagrams, video edit</td></tr>
+  <tr><td>10</td><td>QA &amp; Demonstration Lead</td><td>______________</td><td>Live demo, error cases, final checklist</td></tr>
+</table>
+
+<h3>16.2 Project plan</h3>
+<p>
+Milestones were aligned with the marking scheme so that each scored item has a
+freeze date. Detail lives in <code>docs/Project_Plan.md</code>. The compressed
+view is:
+</p>
+<table>
+  <caption>Table 11. Milestones versus marks</caption>
+  <tr><th>Window (2026)</th><th>Milestone</th><th>Marks</th></tr>
+  <tr><td>6–12 Jul</td><td>Problem definition and domain lock</td><td>5</td></tr>
+  <tr><td>13–19 Jul</td><td>Knowledge-base inventory</td><td>10</td></tr>
+  <tr><td>20–26 Jul</td><td>Rule sheets signed off</td><td>10</td></tr>
+  <tr><td>27 Jul–9 Aug</td><td>Implementation of engine and interview</td><td>10</td></tr>
+  <tr><td>10–16 Aug</td><td>Testing</td><td>5</td></tr>
+  <tr><td>17–23 Aug</td><td>Documentation freeze</td><td>5</td></tr>
+  <tr><td>24–30 Aug</td><td>Slides, video, live-demo rehearsal</td><td>5</td></tr>
+</table>
+
+<h2>17. References</h2>
+<ol>
+  <li>Russell, S. and Norvig, P. <em>Artificial Intelligence: A Modern Approach</em>. Pearson. Chapters on logical agents and inference.</li>
+  <li>Clocksin, W. F. and Mellish, C. S. <em>Programming in Prolog</em>. Springer.</li>
+  <li>Bratko, I. <em>Prolog Programming for Artificial Intelligence</em>. Addison-Wesley.</li>
+  <li>Jackson, P. <em>Introduction to Expert Systems</em>. Addison-Wesley.</li>
+  <li>Shortliffe, E. H. <em>Computer-Based Medical Consultations: MYCIN</em>. Elsevier. (Classic explanation facility.)</li>
+  <li>SWI-Prolog team. <em>SWI-Prolog Reference Manual</em>. <code>https://www.swi-prolog.org/pldoc/doc_for?object=manual</code></li>
+  <li>Department of Computer Science &amp; Engineering, UMaT. <em>CE 474 — Logic of Computer Science, Group Project 1</em>. July 2026.</li>
+  <li>Giannini, P. et al. Surveys of academic advising expert systems in computing education (typical prerequisite-table designs).</li>
+</ol>
+
+<h2 class="break">Appendix A — Course catalogue</h2>
+<p>
+Titles are stored in <code>course/4</code>. Cores required for graduation are
+marked C. Electives are marked E. CE474 is included as a named core to keep the
+project inside the course that assigned it.
+</p>
+<table>
+  <caption>Table 12. Curriculum (abridged labels)</caption>
+  <tr><th>Code</th><th>Level</th><th>Cr</th><th>Title</th><th>K</th></tr>
+  <tr><td>CE101</td><td>100</td><td>3</td><td>Introduction to Computing</td><td>C</td></tr>
+  <tr><td>CE102</td><td>100</td><td>3</td><td>Computer Programming I</td><td>C</td></tr>
+  <tr><td>CE103</td><td>100</td><td>3</td><td>Discrete Mathematics</td><td>C</td></tr>
+  <tr><td>CE104</td><td>100</td><td>3</td><td>Computer Programming II</td><td>C</td></tr>
+  <tr><td>CE105</td><td>100</td><td>3</td><td>Digital Logic Fundamentals</td><td>C</td></tr>
+  <tr><td>CE106</td><td>100</td><td>2</td><td>Introduction to Engineering</td><td>C</td></tr>
+  <tr><td>MA101</td><td>100</td><td>3</td><td>Calculus I</td><td>C</td></tr>
+  <tr><td>MA102</td><td>100</td><td>3</td><td>Calculus II</td><td>C</td></tr>
+  <tr><td>PH101</td><td>100</td><td>3</td><td>Applied Physics</td><td>C</td></tr>
+  <tr><td>EN101</td><td>100</td><td>2</td><td>Communication Skills</td><td>C</td></tr>
+  <tr><td>CE201</td><td>200</td><td>3</td><td>Data Structures</td><td>C</td></tr>
+  <tr><td>CE202</td><td>200</td><td>3</td><td>Object-Oriented Programming</td><td>C</td></tr>
+  <tr><td>CE203</td><td>200</td><td>3</td><td>Computer Organization</td><td>C</td></tr>
+  <tr><td>CE204</td><td>200</td><td>3</td><td>Database Systems</td><td>C</td></tr>
+  <tr><td>CE205</td><td>200</td><td>3</td><td>Operating Systems</td><td>C</td></tr>
+  <tr><td>CE206</td><td>200</td><td>3</td><td>Data Communication</td><td>C</td></tr>
+  <tr><td>CE207</td><td>200</td><td>3</td><td>Software Engineering I</td><td>C</td></tr>
+  <tr><td>CE208</td><td>200</td><td>3</td><td>Web Technologies</td><td>E</td></tr>
+  <tr><td>MA201</td><td>200</td><td>3</td><td>Linear Algebra</td><td>C</td></tr>
+  <tr><td>MA202</td><td>200</td><td>3</td><td>Probability and Statistics</td><td>C</td></tr>
+  <tr><td>CE301</td><td>300</td><td>3</td><td>Algorithms</td><td>C</td></tr>
+  <tr><td>CE302</td><td>300</td><td>3</td><td>Computer Networks</td><td>C</td></tr>
+  <tr><td>CE303</td><td>300</td><td>3</td><td>Theory of Computation</td><td>C</td></tr>
+  <tr><td>CE304</td><td>300</td><td>3</td><td>Software Engineering II</td><td>C</td></tr>
+  <tr><td>CE305</td><td>300</td><td>3</td><td>Artificial Intelligence</td><td>E</td></tr>
+  <tr><td>CE306</td><td>300</td><td>3</td><td>Information Security</td><td>E</td></tr>
+  <tr><td>CE307</td><td>300</td><td>3</td><td>Programming Languages</td><td>E</td></tr>
+  <tr><td>CE308</td><td>300</td><td>3</td><td>Embedded Systems</td><td>E</td></tr>
+  <tr><td>CE309</td><td>300</td><td>3</td><td>Human-Computer Interaction</td><td>E</td></tr>
+  <tr><td>CE310</td><td>300</td><td>3</td><td>Mini Project</td><td>C</td></tr>
+  <tr><td>CE311</td><td>300</td><td>3</td><td>Machine Learning Fundamentals</td><td>E</td></tr>
+  <tr><td>CE312</td><td>300</td><td>3</td><td>Cloud Computing</td><td>E</td></tr>
+  <tr><td>CE401</td><td>400</td><td>3</td><td>Compiler Design</td><td>E</td></tr>
+  <tr><td>CE402</td><td>400</td><td>3</td><td>Distributed Systems</td><td>E</td></tr>
+  <tr><td>CE403</td><td>400</td><td>3</td><td>Data Mining</td><td>E</td></tr>
+  <tr><td>CE404</td><td>400</td><td>3</td><td>Mobile Computing</td><td>E</td></tr>
+  <tr><td>CE405</td><td>400</td><td>3</td><td>Cybersecurity</td><td>E</td></tr>
+  <tr><td>CE406</td><td>400</td><td>3</td><td>Final Year Project I</td><td>C</td></tr>
+  <tr><td>CE407</td><td>400</td><td>3</td><td>Final Year Project II</td><td>C</td></tr>
+  <tr><td>CE408</td><td>400</td><td>2</td><td>Professional Practice</td><td>C</td></tr>
+  <tr><td>CE409</td><td>400</td><td>2</td><td>Entrepreneurship</td><td>E</td></tr>
+  <tr><td>CE410</td><td>400</td><td>3</td><td>Advanced Databases</td><td>E</td></tr>
+  <tr><td>CE411</td><td>400</td><td>3</td><td>Computer Graphics</td><td>E</td></tr>
+  <tr><td>CE412</td><td>400</td><td>3</td><td>Internet of Things</td><td>E</td></tr>
+  <tr><td>CE474</td><td>400</td><td>3</td><td>Logic of Computer Science</td><td>C</td></tr>
+</table>
+
+<h2>Appendix B — Named rule catalogue</h2>
+<table>
+  <caption>Table 13. Logical rules R01–R50</caption>
+  <tr><th>ID</th><th>Predicate</th><th>Expert meaning</th></tr>
+  <tr><td>R01</td><td><code>has_passed/2</code></td><td>Transcript contains the course</td></tr>
+  <tr><td>R02</td><td><code>missing_prerequisite/3</code></td><td>A direct prerequisite is absent</td></tr>
+  <tr><td>R03</td><td><code>all_prerequisites_satisfied/2</code></td><td>Every direct prerequisite is passed</td></tr>
+  <tr><td>R04</td><td><code>ancestor_prerequisite/2</code></td><td>Recursive closure of prerequisites</td></tr>
+  <tr><td>R05</td><td><code>prerequisite_depth/3</code></td><td>Distance of an ancestor</td></tr>
+  <tr><td>R06</td><td><code>longest_prerequisite_path/2</code></td><td>Depth of the deepest ancestor</td></tr>
+  <tr><td>R07</td><td><code>blocked_by_chain/3</code></td><td>An ancestor is missing</td></tr>
+  <tr><td>R08</td><td><code>course_offered_now/2</code></td><td>Offered in the planned semester</td></tr>
+  <tr><td>R09</td><td><code>eligible_for/2</code></td><td>Legal to register (backward goal)</td></tr>
+  <tr><td>R10</td><td><code>eligible_this_semester/3</code></td><td>Legal and offered now</td></tr>
+  <tr><td>R11</td><td><code>unlocked_course/2</code></td><td>Forward view of eligibility</td></tr>
+  <tr><td>R12</td><td><code>credits_completed/2</code></td><td>Sum of passed credits</td></tr>
+  <tr><td>R13</td><td><code>courses_completed_count/2</code></td><td>Count of distinct passed courses</td></tr>
+  <tr><td>R14</td><td><code>computed_gpa/2</code></td><td>Mean of recorded grade points</td></tr>
+  <tr><td>R15</td><td><code>gpa/2</code></td><td>Declared GPA overrides computed</td></tr>
+  <tr><td>R16</td><td><code>academic_standing/2</code></td><td>Class-of-degree / warning / probation</td></tr>
+  <tr><td>R17</td><td><code>at_risk/1</code></td><td>Warning or probation</td></tr>
+  <tr><td>R18</td><td><code>progression_level/2</code></td><td>Year mapped to 100…400</td></tr>
+  <tr><td>R19</td><td><code>catch_up_course/2</code></td><td>Outstanding lower-level course</td></tr>
+  <tr><td>R20</td><td><code>remaining_core/2</code></td><td>Unpassed core</td></tr>
+  <tr><td>R21</td><td><code>remaining_core_count/2</code></td><td>How many cores remain</td></tr>
+  <tr><td>R22</td><td><code>electives_completed_count/2</code></td><td>Passed electives</td></tr>
+  <tr><td>R23</td><td><code>elective_requirement_met/1</code></td><td>At least four electives</td></tr>
+  <tr><td>R24</td><td><code>matches_interest/2</code></td><td>Course tagged with a student interest</td></tr>
+  <tr><td>R25</td><td><code>suggested_track/2</code></td><td>Career track overlapping an interest</td></tr>
+  <tr><td>R26</td><td><code>track_match_count/3</code></td><td>Strength of that overlap</td></tr>
+  <tr><td>R27</td><td><code>primary_track/2</code></td><td>Best-scoring track</td></tr>
+  <tr><td>R28</td><td><code>unlocks_count/3</code></td><td>How many later courses wait on this one</td></tr>
+  <tr><td>R29</td><td><code>needed_for_later/2</code></td><td>Gating course (unlocks ≥ 2)</td></tr>
+  <tr><td>R30</td><td><code>course_priority_score/3</code></td><td>Heuristic ranking</td></tr>
+  <tr><td>R31</td><td><code>recommended_course/3</code></td><td>Eligible and score ≥ 3</td></tr>
+  <tr><td>R32</td><td><code>top_recommendations/4</code></td><td>Top-N unique courses</td></tr>
+  <tr><td>R33</td><td><code>recommended_load/2</code></td><td>18 / 15 / 12 by standing</td></tr>
+  <tr><td>R34</td><td><code>overload_allowed/1</code></td><td>CGPA ≥ 3.00 and not at risk</td></tr>
+  <tr><td>R35</td><td><code>internship_ready/1</code></td><td>Year, credits, CE204/207, CGPA</td></tr>
+  <tr><td>R36</td><td><code>fyp_eligible/1</code></td><td>May register FYP I</td></tr>
+  <tr><td>R37</td><td><code>fyp_in_progress/1</code></td><td>FYP I done, FYP II open</td></tr>
+  <tr><td>R38</td><td><code>can_graduate/1</code></td><td>Conjunctive graduation audit</td></tr>
+  <tr><td>R39</td><td><code>near_graduation/1</code></td><td>Year 4, few cores, not finished</td></tr>
+  <tr><td>R40</td><td><code>honors_eligible/1</code></td><td>High CGPA and few remaining cores</td></tr>
+  <tr><td>R41</td><td><code>repeat_advised/2</code></td><td>Weak grade in a gating course</td></tr>
+  <tr><td>R42</td><td><code>suggested_elective/3</code></td><td>Interest-matched elective this semester</td></tr>
+  <tr><td>R43</td><td><code>level_appropriate/2</code></td><td>Course level ≤ student level</td></tr>
+  <tr><td>R44</td><td><code>semester_plan_credits/4</code></td><td>Pack plan to the credit cap</td></tr>
+  <tr><td>R45</td><td><code>what_if_unlocks/3</code></td><td>Hypothetical new eligibility</td></tr>
+  <tr><td>R46</td><td><code>support_action/2</code></td><td>Advisor to-do list</td></tr>
+  <tr><td>R47</td><td><code>warning_reason/2</code></td><td>Evidence behind risk</td></tr>
+  <tr><td>R48</td><td><code>next_milestone/2</code></td><td>Immediate programme milestone</td></tr>
+  <tr><td>R49</td><td><code>industry_suggestion/2</code></td><td>Industry linked to primary track</td></tr>
+  <tr><td>R50</td><td><code>consultation_focus/2</code></td><td>Interview / report mode</td></tr>
+</table>
+
+<h2>Appendix C — File map and how to run</h2>
+<pre>LOCS 2/
+  run.bat
+  test.bat
+  README.md
+  src/          main.pl loader.pl knowledge_base.pl rules.pl
+                inference.pl explanation.pl validation.pl consultation.pl
+  tests/        test_suite.pl
+  docs/         System_Documentation.html  (this report)
+                User_Manual.md Project_Plan.md Group_Roles.md Checkpoints.md
+  presentation/ slides.html demo_script.md
+  examples/     sample_queries.pl sample_session.txt</pre>
+<p>
+Install SWI-Prolog. From the project root run <code>run.bat</code> to advise and
+<code>test.bat</code> to regress. Print this HTML file to A4 PDF for the 20–30
+page bound document. Open <code>presentation/slides.html</code> in a browser
+for the oral presentation. Record the video from
+<code>presentation/demo_script.md</code>. Write the ten names into Table 10
+and into <code>docs/Group_Roles.md</code> before submission.
+</p>
+<p class="footer-note">
+End of system documentation — CAAES, CE 474 Group Project 1, UMaT, 2026.
+</p>
+
+</body>
+</html>

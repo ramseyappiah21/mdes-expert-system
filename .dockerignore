@@ -1,0 +1,13 @@
+.git
+.swipl-dir
+docs
+presentation
+examples
+tests
+*.md
+.gitignore
+run.bat
+run-web.bat
+test.bat
+Thumbs.db
+.DS_Store
