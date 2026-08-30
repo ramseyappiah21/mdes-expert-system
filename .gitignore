@@ -5,4 +5,7 @@ Thumbs.db
 .DS_Store
 .env
 .fly
+node_modules
+.vercel
+public
 

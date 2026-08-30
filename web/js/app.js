@@ -47,15 +47,23 @@ function yesMap(id) {
   return out;
 }
 
-async function api(path, body) {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {})
-  });
+async function remoteApi(path, body, method = "POST") {
+  const opts = { method };
+  if (method !== "GET") {
+    opts.headers = { "Content-Type": "application/json" };
+    opts.body = JSON.stringify(body || {});
+  }
+  const res = await fetch(path, opts);
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || res.statusText);
   return data;
+}
+
+async function api(path, body, method = "POST") {
+  if (window.mdesReady && window.mdesCall) {
+    return window.mdesCall(method, path, body);
+  }
+  return remoteApi(path, body, method);
 }
 
 function showResult(html) {
@@ -329,12 +337,25 @@ async function boot() {
   $("brandLink").onclick = (e) => { e.preventDefault(); location.hash = "#/"; };
   window.addEventListener("hashchange", route);
   try {
-    const res = await fetch("/api/options");
-    state.options = await res.json();
+    state.options = await remoteApi("/api/options", null, "GET");
   } catch (e) {
-    $("domainGrid").innerHTML = `<p class="err">Could not load the Prolog API. Start the site with run-web.bat or the Docker image.</p>`;
-    showHome();
-    return;
+    if (!window.mdesBoot) {
+      $("domainGrid").innerHTML = `<p class="err">Could not load the Prolog API. Start the site with run-web.bat or the Docker image.</p>`;
+      showHome();
+      return;
+    }
+    const mask = $("bootMask");
+    if (mask) mask.hidden = false;
+    try {
+      await window.mdesBoot();
+      state.options = await window.mdesCall("GET", "/api/options", {});
+    } catch (err) {
+      if (mask) mask.hidden = true;
+      $("domainGrid").innerHTML = `<p class="err">${err.message}</p>`;
+      showHome();
+      return;
+    }
+    if (mask) mask.hidden = true;
   }
   route();
 }

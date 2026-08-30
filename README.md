@@ -40,6 +40,7 @@ Every domain can demonstrate backward, forward, and recursive reasoning. Shared 
 
 The public interface is a browser app served by the same SWI-Prolog engine. Each domain form posts to `/api/...`; the server proves the goal and returns the recommendation with explanations.
 
+**Live site:** https://mdes-expert-system.vercel.app  
 **Repository:** https://github.com/ramseyappiah21/mdes-expert-system
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ramseyappiah21/mdes-expert-system)

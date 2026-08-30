@@ -1,0 +1,11 @@
+{
+  "name": "mdes-expert-system",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/copy-public.mjs"
+  },
+  "dependencies": {
+    "swipl-wasm": "^8.0.7"
+  }
+}

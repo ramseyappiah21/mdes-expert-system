@@ -1,0 +1,14 @@
+{
+  "framework": null,
+  "buildCommand": "node scripts/copy-public.mjs",
+  "outputDirectory": "public",
+  "headers": [
+    {
+      "source": "/swipl/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "text/javascript; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}

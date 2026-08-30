@@ -1,0 +1,16 @@
+docs
+presentation
+examples
+tests
+.git
+.swipl-dir
+node_modules
+public
+.fly
+Dockerfile
+fly.toml
+railway.json
+render.yaml
+run.bat
+run-web.bat
+test.bat
